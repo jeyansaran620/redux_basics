@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>React App</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/redux/3.7.2/redux.min.js"></script>
+  </head>
+  <body>
+    <script src="../public/state.js"></script>
+    <script>
+         const checker = (store) => (next) => (action) =>
+         {
+        
+                    if ((action.type ==='ADD_TODO' && action.todo.name.toLowerCase().includes('bitcoin'))
+                       || (action.type ==='ADD_GOAL' && action.goal.name.toLowerCase().includes('bitcoin'))
+                        )
+                       {
+                           console.log("no bitcoins");
+                        }
+                      else 
+                       {
+                          next(action)
+                        }
+          }
+
+          
+         const logger = (store) => (next) => (action) =>
+         {
+            console.group(action.type)
+            console.log(action)
+            const result = next(action)
+            console.log('the new state is: ',store.getState())   
+            console.groupEnd();
+            return  result
+         }
+        let data = Redux.createStore(Redux.combineReducers(
+            {
+                todos,
+                goals
+            }
+        ) , Redux.applyMiddleware(checker,logger))
+
+        data.subscribe(() => {
+       const { goals,todos } = data.getState();
+       document.getElementById('todos').innerHTML = '';
+       document.getElementById('goals').innerHTML = '';
+       goals.forEach(addGoalToDOM)
+       todos.forEach(addTodoToDOM)
+     })
+
+        function addTodoToDOM(todo)
+        {
+            const node = document.createElement('li')
+            const text = document.createTextNode(todo.name);
+            node.appendChild(text)
+            const button = document.createElement("input");
+            button.type = "button";
+            button.value = todo.complete;
+            button.addEventListener('click' , () => toggleTodo(todo.id));
+            node.appendChild(button);
+            const remove = document.createElement("input");
+            remove.type = "button";
+            remove.value = 'remove';
+            remove.addEventListener('click' , () => removeTodo(todo.id));
+            node.appendChild(remove);
+            document.getElementById('todos').appendChild(node);
+            
+        }
+        
+        function addGoalToDOM(goal)
+        {
+            const node = document.createElement('li')
+            const text = document.createTextNode(goal.name);
+            node.appendChild(text);
+            const remove = document.createElement("input");
+            remove.type = "button";
+            remove.value = 'remove';
+            remove.addEventListener('click' , () => removeGoal(goal.id));
+            node.appendChild(remove);
+            document.getElementById('goals').appendChild(node);
+            
+        }
+
+        function generateId()
+        {
+            return Math.random().toString(36).substring(2) + (new Date()).getTime().toString(36)
+        }
+        function addTodo()
+        {
+            const input = document.getElementById('todo')
+            const name = input.value
+            input.value =''
+
+            data.dispatch(addTodoAction({
+            id:generateId(),
+            name,
+            complete:false
+    }))
+
+        }
+        function toggleTodo(id)
+        {
+            data.dispatch(toggleTodoAction(id))
+        }
+        function removeTodo(id)
+        {
+            data.dispatch(removeTodoAction(id))
+        }
+        function addGoal()
+        {
+            const input = document.getElementById('goal')
+            const name = input.value
+            input.value =''
+
+            data.dispatch(addGoalAction({
+            id:generateId(),
+            name
+    }))
+
+        }
+        function removeGoal(id)
+        {
+            data.dispatch(removeGoalAction(id))
+        }
+        
+    </script>
+    <div>
+    <h1>TODO List</h1>
+    <input id='todo' type='text' placeholder ='Add todo' />
+    <button onclick="addTodo()">Add Todo</button>
+    <ul id='todos'></ul>
+</div>
+<div>
+    <h1>Goal List</h1>
+    <input id='goal' type='text' placeholder ='Add goal' />
+    <button onclick="addGoal()">Add Goal</button>
+    <ul id='goals'></ul>
+</div>
+  </body>
+</html>
